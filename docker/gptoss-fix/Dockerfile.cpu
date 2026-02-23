@@ -1,0 +1,35 @@
+# Dockerfile for vLLM CPU with gpt-oss stop_token_ids fix
+#
+# Fix for https://github.com/vllm-project/vllm/issues/22519
+#
+# Patches the vLLM entrypoint so that server-default stop_token_ids
+# (e.g., </call> = 200012, </return> = 200002) are propagated into
+# every request's SamplingParams instead of being silently discarded.
+#
+# Build:
+#   docker build -f docker/gptoss-fix/Dockerfile.cpu -t vllm-cpu-gptoss:latest docker/gptoss-fix
+#
+# Run (example with gpt-oss-20b):
+#   docker run -d --name vllm-gptoss-cpu \
+#     -p 8000:8000 \
+#     -v /path/to/models:/models \
+#     --shm-size=8g \
+#     -e HF_TOKEN="hf_..." \
+#     -e HF_HOME="/models/hf" \
+#     -e VLLM_CPU_KVCACHE_SPACE=40 \
+#     vllm-cpu-gptoss:latest \
+#     openai/gpt-oss-20b \
+#     --served-model-name gpt-oss-20b \
+#     --max-model-len 4096 \
+#     --trust-remote-code \
+#     --tool-call-parser openai \
+#     --enable-auto-tool-choice
+
+ARG BASE_IMAGE=public.ecr.aws/q9t5s3a7/vllm-ci-test-repo:574a4cf9f32e074ad0e73a07b0af39e5f3394ef1-cpu
+
+FROM ${BASE_IMAGE}
+
+COPY apply_fix.py /tmp/apply_fix.py
+RUN python3 /tmp/apply_fix.py && rm /tmp/apply_fix.py
+
+ENTRYPOINT ["vllm", "serve"]
