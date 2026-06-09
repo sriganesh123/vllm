@@ -61,6 +61,7 @@ class TestChatCompletionStopTokenIds:
         )
 
         assert set(sampling_params.stop_token_ids) == {200012, 200002, 99999}
+        assert sampling_params.stop_token_ids == [99999, 200012, 200002]
 
     def test_no_stop_token_ids_anywhere(self, minimal_chat_request):
         """When neither client nor server specifies stop_token_ids, result is empty."""
@@ -103,6 +104,7 @@ class TestChatCompletionStopTokenIds:
         )
 
         assert set(sampling_params.stop_token_ids) == {200012, 200002, 55555}
+        assert sampling_params.stop_token_ids == [200012, 55555, 200002]
         assert len(sampling_params.stop_token_ids) == 3
 
 
@@ -146,6 +148,7 @@ class TestCompletionStopTokenIds:
         )
 
         assert set(sampling_params.stop_token_ids) == {200012, 200002, 99999}
+        assert sampling_params.stop_token_ids == [99999, 200012, 200002]
 
     def test_no_stop_token_ids_anywhere(self, minimal_completion_request):
         """When neither client nor server specifies stop_token_ids, result is empty."""

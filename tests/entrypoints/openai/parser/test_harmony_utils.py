@@ -12,6 +12,7 @@ from vllm.entrypoints.openai.parser.harmony_utils import (
     has_custom_tools,
     parse_chat_input_to_harmony_message,
     parse_chat_output,
+    parse_output_into_messages,
 )
 from vllm.entrypoints.openai.responses.harmony import (
     response_input_to_harmony,
@@ -765,6 +766,17 @@ class TestParseChatOutput:
         reasoning, final_content, _ = parse_chat_output(token_ids)
         assert reasoning == "I've thought hard about this."
         assert final_content == "The answer is 4."
+
+    def test_parse_output_into_messages_processes_after_stop_token(self) -> None:
+        harmony_str = (
+            "<|channel|>analysis<|message|>I've thought hard about this.<|end|>"
+            "<|start|>assistant<|channel|>final<|message|>The answer is 4.<|end|>"
+        )
+        token_ids = get_encoding().encode(harmony_str, allowed_special="all")
+        parser = parse_output_into_messages(token_ids)
+        assert [msg.channel for msg in parser.messages] == ["analysis", "final"]
+        assert parser.messages[0].content[0].text == "I've thought hard about this."
+        assert parser.messages[1].content[0].text == "The answer is 4."
 
     def test_parse_chat_output_commentary_with_recipient_excluded(self) -> None:
         """Commentary with a recipient (tool call) should not appear in
